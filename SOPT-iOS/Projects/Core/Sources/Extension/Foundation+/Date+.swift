@@ -25,4 +25,25 @@ public extension Date {
         dateComponents.day = day
         return calendar.date(from: dateComponents) ?? nil
     }
+    
+    func toString() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
+        dateFormatter.timeZone = TimeZone(identifier: "KST")
+        return dateFormatter.string(from: self)
+    }
+    
+    func toYear() -> Int {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy"
+        dateFormatter.timeZone = TimeZone(identifier: "KST")
+        return Int(dateFormatter.string(from: self)) ?? 0
+    }
+    
+    func toMonth() -> Int {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM"
+        dateFormatter.timeZone = TimeZone(identifier: "KST")
+        return Int(dateFormatter.string(from: self)) ?? 0
+    }
 }

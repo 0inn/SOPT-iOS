@@ -30,6 +30,19 @@ public extension String {
         }
     }
     
+    /// Date String을 Date 타입으로 반환하는 메서드
+    func toDate(with type: String) -> Date {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = type
+        dateFormatter.timeZone = TimeZone(identifier: "KST")
+        if let date = dateFormatter.date(from: self) {
+            return date
+        } else {
+            print("toDate() convert error")
+            return Date()
+        }
+    }
+    
     /// serverTimeToString의 용도 정의
     enum TimeStringCase {
         case forNotification
