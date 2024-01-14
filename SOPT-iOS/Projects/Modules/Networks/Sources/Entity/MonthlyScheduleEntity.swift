@@ -8,7 +8,9 @@
 
 import Foundation
 
-public typealias MonthlyScheduleEntity = [DailyScheduleEntity]
+public struct MonthlyScheduleEntity: Decodable {
+    public let dates: [DailyScheduleEntity]
+}
 
 public struct DailyScheduleEntity: Decodable {
     public let date: String
@@ -17,8 +19,9 @@ public struct DailyScheduleEntity: Decodable {
 }
 
 public struct ScheduleEntity: Decodable {
-    public let start: String
-    public let end: String
-    public let name: String
+    public let scheduleId: Int
+    public let startDate: String
+    public let endDate: String
+    public let title: String
     public let attribute: String
 }

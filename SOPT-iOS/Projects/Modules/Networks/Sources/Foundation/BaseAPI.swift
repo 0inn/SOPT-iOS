@@ -59,7 +59,7 @@ extension BaseAPI {
         case .poke:
             base += "/poke"
         case .schedule:
-            base += "/schedule"
+            base = "\(operationBaseURL)/schedules"
         }
         
         guard let url = URL(string: base) else {

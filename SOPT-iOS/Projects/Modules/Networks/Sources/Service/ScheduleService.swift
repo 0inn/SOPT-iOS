@@ -14,11 +14,11 @@ import Core
 public typealias DefaultScheduleService = BaseService<ScheduleAPI>
 
 public protocol ScheduleService {
-    func fetchMonthlySchedule(start: String, end: String) -> AnyPublisher<MonthlyScheduleEntity, Error>
+    func fetchMonthlySchedule(start: String, end: String) -> AnyPublisher<BaseEntity<MonthlyScheduleEntity>, Error>
 }
 
 extension DefaultScheduleService: ScheduleService {
-    public func fetchMonthlySchedule(start: String, end: String) -> AnyPublisher<MonthlyScheduleEntity, Error> {
-        opRequestObjectInCombine(ScheduleAPI.monthly)
+    public func fetchMonthlySchedule(start: String, end: String) -> AnyPublisher<BaseEntity<MonthlyScheduleEntity>, Error> {
+        opRequestObjectInCombine(ScheduleAPI.monthly(start: start, end: end))
     }
 }

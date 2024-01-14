@@ -26,7 +26,7 @@ extension ScheduleRepository: ScheduleRepositoryInterface {
     public func getMonthlySchedule(start: String, end: String) -> AnyPublisher<MonthlyScheduleModel, Error> {
         return self.scheduleService
             .fetchMonthlySchedule(start: start, end: end)
-            .map { $0.toDomain() }
+            .compactMap { $0.data?.toDomain() }
             .eraseToAnyPublisher()
     }
 }

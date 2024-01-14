@@ -43,14 +43,19 @@ extension ScheduleViewModel {
         self.bindOutput(output: output, cancelBag: cancelBag)
         
         input.viewDidLoad
-            .map { _ in sample }
-            .subscribe(output.monthlyScheduleList)
+            .withUnretained(self)
+            .sink { owner, _ in
+                owner.useCase.getMonthlySchedule()
+            }
             .store(in: cancelBag)
         
         return output
     }
     
     private func bindOutput(output: Output, cancelBag: CancelBag) {
-        
+        useCase.monthlySchedule
+            .map { [$0] }
+            .subscribe(output.monthlyScheduleList)
+            .store(in: cancelBag)
     }
 }

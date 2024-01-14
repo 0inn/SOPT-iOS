@@ -11,13 +11,15 @@ import Core
 public typealias MonthlyScheduleList = [MonthlyScheduleModel]
 
 public struct MonthlyScheduleModel: Hashable {
+    public let year: Int
     public let month: Int
     public let schedule: [DailyScheduleModel]
     public var row: Int {
         schedule.count / 7
     }
     
-    public init(month: Int, schedule: [DailyScheduleModel]) {
+    public init(year: Int, month: Int, schedule: [DailyScheduleModel]) {
+        self.year = year
         self.month = month
         self.schedule = schedule
     }
@@ -27,12 +29,17 @@ public typealias DailyScheduleList = [DailyScheduleModel]
 
 public struct DailyScheduleModel: Hashable {
     public let date: String
+    public var dayString: String {
+        date.split(separator: "-").last?.filter { $0 != "0" } ?? ""
+    }
     public let day: DayType
+    public let isCurMonth: Bool
     public let schedule: ScheduleList
     
-    public init(date: String, day: DayType, schedule: ScheduleList) {
+    public init(date: String, day: DayType, isCurMonth: Bool = true, schedule: ScheduleList) {
         self.date = date
         self.day = day
+        self.isCurMonth = isCurMonth
         self.schedule = schedule
     }
 }
