@@ -14,6 +14,8 @@ import SafariServices
 /// RouterProtocol은 Coordinator에서 화면전환의 종류를 지정합니다.
 public protocol RouterProtocol: ViewControllable {
     
+    var topViewController: UIViewController? { get }
+    
     func present(_ module: ViewControllable?)
     func present(_ module: ViewControllable?, animated: Bool)
     func present(_ module: ViewControllable?, animated: Bool, modalPresentationSytle: UIModalPresentationStyle)
@@ -73,6 +75,10 @@ final class Router: NSObject, RouterProtocol {
     private weak var rootController: UINavigationController?
     private var completions: [UIViewController : () -> Void]
     private var transition: UIViewControllerAnimatedTransitioning?
+    
+    public var topViewController: UIViewController? {
+        self.rootController?.topViewController
+    }
     
     // MARK: - ViewControllable
     
@@ -255,6 +261,10 @@ final class Router: NSObject, RouterProtocol {
         self.rootController?.isNavigationBarHidden = true
     }
     
+    public func showBottomSheet(manager: BottomSheetManager, toPresent: UIViewController, on view: UIViewController?) {
+        manager.present(toPresent: toPresent, on: view)
+    }
+
     // MARK: - Private methods
     
     private func runCompletion(for controller: UIViewController) {

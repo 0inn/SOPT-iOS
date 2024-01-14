@@ -39,7 +39,8 @@ extension AppDelegate {
                 MainRepository(
                     userService: DefaultUserService(),
                     configService: DefaultConfigService(),
-                    descriptionService: DefaultDescriptionService()
+                    descriptionService: DefaultDescriptionService(),
+                    pokeService: DefaultPokeService()
                 )
             }
         )
@@ -149,6 +150,22 @@ extension AppDelegate {
             implement: {
                 PokeMyFriendsRepository(
                     service: DefaultPokeService()
+                )
+            }
+        )
+        container.register(
+            interface: PokeOnboardingRepositoryInterface.self,
+            implement: {
+                PokeOnboardingRepository(
+                    pokeService: DefaultPokeService()
+                )
+            }
+        )
+        container.register(
+            interface: PokeNotificationRepositoryInterface.self,
+            implement: {
+                PokeNotificationRepository(
+                    pokeService: DefaultPokeService()
                 )
             }
         )

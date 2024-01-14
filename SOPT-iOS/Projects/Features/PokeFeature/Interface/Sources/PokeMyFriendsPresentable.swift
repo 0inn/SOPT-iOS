@@ -13,6 +13,9 @@ import Domain
 public protocol PokeMyFriendsViewControllable: ViewControllable { }
 
 public protocol PokeMyFriendsCoordinatable {
+    var showFriendsListButtonTap: ((PokeRelation) -> Void)? { get set }
+    var onPokeButtonTapped: ((PokeUserModel) -> Driver<(PokeUserModel, PokeMessageModel)>)? { get set }
+    var onProfileImageTapped: ((Int) -> Void)? { get set }
 }
 
 public typealias PokeMyFriendsViewModelType = ViewModelType & PokeMyFriendsCoordinatable

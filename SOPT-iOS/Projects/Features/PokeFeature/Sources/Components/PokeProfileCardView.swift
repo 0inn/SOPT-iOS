@@ -12,15 +12,15 @@ import DSKit
 import Core
 import Domain
 
-public final class PokeProfileCardView: UIView {
+public final class PokeProfileCardView: UIView, PokeCompatible {
     
     // MARK: - Properties
+       
+    lazy var profileTapped = self.profileImageView.gesture().map { _ in self.user }.asDriver()
+
+    lazy var kokButtonTap: Driver<PokeUserModel?> = kokButton.tap.map { self.user }.asDriver()
     
-    typealias UserId = Int
-    
-    lazy var kokButtonTap: Driver<UserId?> = kokButton.tap.map { self.userId }.asDriver()
-    
-    var userId: Int?
+    var user: PokeUserModel?
     
     // MARK: - UI Components
     
@@ -29,6 +29,7 @@ public final class PokeProfileCardView: UIView {
         imageView.layer.cornerRadius = 60
         imageView.backgroundColor = DSKitAsset.Colors.gray700.color
         imageView.clipsToBounds = true
+        imageView.contentMode = .scaleAspectFill
         return imageView
     }()
     
@@ -105,10 +106,11 @@ public final class PokeProfileCardView: UIView {
     // MARK: - Methods
 
     func setData(with model: PokeUserModel) {
-        self.userId = model.userId
+        self.user = model
         self.profileImageView.setImage(with: model.profileImage, placeholder: DSKitAsset.Assets.iconDefaultProfile.image)
         self.nameLabel.text = model.name
-        self.partLabel.text = model.part
+        self.partLabel.text = String(describing: model.generation) + "기" + " " + model.part
+        self.kokButton.isEnabled = !model.isAlreadyPoke
     }
     
     @discardableResult
@@ -121,5 +123,11 @@ public final class PokeProfileCardView: UIView {
     func setBackgroundColor(with color: UIColor) -> Self {
         self.backgroundColor = color
         return self
+    }
+    
+    func changeUIAfterPoke(newUserModel: PokeUserModel) {
+        guard let user, user.userId == newUserModel.userId else { return }
+        
+        self.setData(with: newUserModel)
     }
 }

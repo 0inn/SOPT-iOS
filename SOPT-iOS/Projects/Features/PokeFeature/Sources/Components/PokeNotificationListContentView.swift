@@ -10,8 +10,9 @@ import Core
 import DSKit
 
 import UIKit
+import Domain
 
-final public class PokeNotificationListContentView: UIView {
+final public class PokeNotificationListContentView: UIView, PokeCompatible {
     private enum Metrics {
         static let contentDefaultSpacing = 8.f
         static let leftToCenterContentPadding = 12.f
@@ -79,6 +80,15 @@ final public class PokeNotificationListContentView: UIView {
     private let isDetailView: Bool
     
     private var userId: Int?
+    var user: PokeUserModel?
+    
+    lazy var kokButtonTap: Driver<PokeUserModel?> = pokeKokButton.tap
+        .map { self.user }
+        .asDriver()
+    
+    lazy var profileImageTap = profileImageView
+        .tap
+        .map { self.user }
     
     // MARK: - View Lifecycle
     public init(
@@ -86,6 +96,7 @@ final public class PokeNotificationListContentView: UIView {
         frame: CGRect
     ) {
         self.isDetailView = isDetailView
+      
         super.init(frame: frame)
 
         self.initializeViews()
@@ -139,24 +150,34 @@ extension PokeNotificationListContentView {
 }
 
 extension PokeNotificationListContentView {
-    public func configure(with model: NotificationListContentModel) {
+    public func configure(with model: PokeUserModel) {
+        self.user = model
         self.userId = model.userId
-        self.profileImageView.setImage(with: model.avatarUrl, relation: model.pokeRelation)
+        self.profileImageView.setImage(with: model.profileImage, relation: PokeRelation(rawValue: model.relationName) ?? .newFriend)
         self.nameLabel.text = model.name
-        self.partInfoLabel.text = model.partInfomation
-        self.descriptionLabel.attributedText = model.description.applyMDSFont()
-        self.pokeChipView.configure(with: model.chipInfo)
-        self.pokeKokButton.isEnabled = !model.isPoked
-        self.pokeKokButton.setIsFriend(with: !model.isFirstMeet)
+        self.partInfoLabel.text = model.part
+        self.descriptionLabel.attributedText = model.message.applyMDSFont()
+        self.pokeChipView.configure(with: model.mutualRelationMessage)
+        self.pokeKokButton.isEnabled = !model.isAlreadyPoke
     }
     
-    public func poked() {
-        // TBD
+    func setData(with model: PokeUserModel) {
+        self.configure(with: model)
     }
     
-    public func signalForPokeButtonClicked() -> Driver<Int?> {
-        self.pokeKokButton.tap.map { self.userId }.asDriver()
+    func changeUIAfterPoke(newUserModel: PokeUserModel) {
+        guard let user, user.userId == newUserModel.userId else { return }
+        
+        self.setData(with: newUserModel)
     }
+    
+    public func signalForPokeButtonClicked() -> Driver<PokeUserModel> {
+        self.pokeKokButton
+            .tap
+            .compactMap { [weak self] _ in self?.user }
+            .asDriver()
+    }
+
 }
 
 // NOTE(@승호): MDSFont 적용하고 DSKit으로 옮기고 적용하기.

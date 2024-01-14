@@ -13,20 +13,28 @@ import Core
 import Domain
 
 import PokeFeatureInterface
+import BaseFeatureDependency
 
 public class PokeMyFriendsViewModel:
     PokeMyFriendsViewModelType {
+    
+    public var showFriendsListButtonTap: ((PokeRelation) -> Void)?
+    public var onPokeButtonTapped: ((PokeUserModel) -> Driver<(PokeUserModel, PokeMessageModel)>)?
+    public var onProfileImageTapped: ((Int) -> Void)?
         
     // MARK: - Properties
     
     private let useCase: PokeMyFriendsUseCase
     private var cancelBag = CancelBag()
+    private var myFriends: PokeMyFriendsModel?
     
     // MARK: - Inputs
     
     public struct Input {
         let viewDidLoad: Driver<Void>
         let moreFriendListButtonTap: Driver<PokeRelation>
+        let pokeButtonTap: Driver<PokeUserModel?>
+        let profileImageTap: Driver<PokeUserModel?>
     }
     
     // MARK: - Outputs
@@ -53,9 +61,27 @@ extension PokeMyFriendsViewModel {
                 owner.useCase.getFriends()
             }.store(in: cancelBag)
         
-        input.moreFriendListButtonTap.sink { relation in
-            print("\(relation) 친구 리스트 바텀 시트 보여주기")
-        }.store(in: cancelBag)
+        input.moreFriendListButtonTap
+            .withUnretained(self)
+            .sink { owner, relation in
+                owner.showFriendsListButtonTap?(relation)
+            }.store(in: cancelBag)
+        
+        input.pokeButtonTap
+            .compactMap { $0 }
+            .flatMap { [weak self] userModel -> Driver<(PokeUserModel, PokeMessageModel)> in
+                guard let self, let value = self.onPokeButtonTapped?(userModel) else { return .empty() }
+                return value
+            }
+            .sink {[weak self] userModel, messageModel in
+                self?.useCase.poke(userId: userModel.userId, message: messageModel)
+            }.store(in: cancelBag)
+        
+        input.profileImageTap
+            .compactMap { $0 }
+            .sink { [weak self] user in
+                self?.onProfileImageTapped?(user.playgroundId)
+            }.store(in: cancelBag)
         
         return output
     }
@@ -64,5 +90,32 @@ extension PokeMyFriendsViewModel {
         useCase.myFriends
             .subscribe(output.myFriends)
             .store(in: cancelBag)
+        
+        useCase.myFriends
+            .sink { [weak self] myFriends in
+                self?.myFriends = myFriends
+            }.store(in: cancelBag)
+        
+        useCase.pokedResponse
+            .withUnretained(self)
+            .sink { owner, user in
+                owner.myFriends = owner.myFriends?.replaceUser(newUserModel: user)
+                if let myFriends = owner.myFriends {
+                    output.myFriends.send(myFriends)
+                }
+            }.store(in: cancelBag)
+        
+        useCase.pokedResponse
+            .sink { user in
+                ToastUtils.showMDSToast(type: .success, text: I18N.Poke.pokeSuccess)
+                let notiName = NotiList.makeNotiName(list: .pokedResponse)
+                NotificationCenter.default.post(name: notiName, object: user)
+            }.store(in: cancelBag)
+        
+        useCase.errorMessage
+            .compactMap { $0 }
+            .sink { message in
+                ToastUtils.showMDSToast(type: .alert, text: message)
+            }.store(in: cancelBag)
     }
 }

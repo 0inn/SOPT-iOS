@@ -13,18 +13,25 @@ import Core
 import Domain
 
 import PokeFeatureInterface
+import BaseFeatureDependency
+
+internal typealias UserId = Int
 
 public class PokeMainViewModel:
     PokeMainViewModelType {
     
-    typealias UserId = Int
-    
     public var onNaviBackTap: (() -> Void)?
+    public var onPokeNotificationsTap: (() -> Void)?
     public var onMyFriendsTap: (() -> Void)?
+    public var onProfileImageTapped: ((Int) -> Void)?
+    public var onPokeButtonTapped: ((PokeUserModel) -> Driver<(PokeUserModel, PokeMessageModel)>)?
+    public var onNewFriendMade: ((String) -> Void)?
+    public var switchToOnboarding: (() -> Void)?
     
     // MARK: - Properties
     
     private let useCase: PokeMainUseCase
+    private let isRouteFromRoot: Bool
     private var cancelBag = CancelBag()
     
     // MARK: - Inputs
@@ -34,27 +41,32 @@ public class PokeMainViewModel:
         let naviBackButtonTap: Driver<Void>
         let pokedSectionHeaderButtonTap: Driver<Void>
         let friendSectionHeaderButtonTap: Driver<Void>
-        let pokedSectionKokButtonTap: Driver<UserId?>
-        let friendSectionKokButtonTap: Driver<UserId?>
-        let nearbyFriendsSectionKokButtonTap: Driver<UserId?>
+        let pokedSectionKokButtonTap: Driver<PokeUserModel?>
+        let friendSectionKokButtonTap: Driver<PokeUserModel?>
+        let nearbyFriendsSectionKokButtonTap: Driver<PokeUserModel?>
         let refreshRequest: Driver<Void>
+        let profileImageTap: Driver<PokeUserModel?>
+        let randomUserSectionFriendProfileImageTap: Driver<Int?>
     }
     
     // MARK: - Outputs
     
     public struct Output {
-        let pokedToMeUser = PassthroughSubject<NotificationListContentModel, Never>()
+        let pokedToMeUser = PassthroughSubject<PokeUserModel, Never>()
         let pokedUserSectionWillBeHidden = PassthroughSubject<Bool, Never>()
         let myFriend = PassthroughSubject<PokeUserModel, Never>()
         let friendsSectionWillBeHidden = PassthroughSubject<Bool, Never>()
         let friendRandomUsers = PassthroughSubject<[PokeFriendRandomUserModel], Never>()
         let endRefreshLoading = PassthroughSubject<Void, Never>()
+        let pokeResponse = PassthroughSubject<PokeUserModel, Never>()
+        let isLoading = PassthroughSubject<Bool, Never>()
     }
     
     // MARK: - initialization
     
-    public init(useCase: PokeMainUseCase) {
+    public init(useCase: PokeMainUseCase, isRouteFromRoot: Bool = false) {
         self.useCase = useCase
+        self.isRouteFromRoot = isRouteFromRoot
     }
 }
 
@@ -70,14 +82,25 @@ extension PokeMainViewModel {
                 self?.useCase.getFriendRandomUser()
             }.store(in: cancelBag)
         
+        input.viewDidLoad
+            .map { [weak self] _ in
+                self?.isRouteFromRoot
+            }
+            .compactMap { $0 }
+            .filter { $0 == true }
+            .sink { [weak self] _ in
+                output.isLoading.send(true)
+                self?.useCase.checkPokeNewUser()
+            }.store(in: cancelBag)
+        
         input.naviBackButtonTap
             .sink { [weak self] _ in
                 self?.onNaviBackTap?()
             }.store(in: cancelBag)
         
         input.pokedSectionHeaderButtonTap
-            .sink { _ in
-                print("찌르기 알림 뷰로 이동")
+            .sink { [weak self] _ in
+                self?.onPokeNotificationsTap?()
             }.store(in: cancelBag)
         
         input.friendSectionHeaderButtonTap
@@ -85,22 +108,39 @@ extension PokeMainViewModel {
                 self?.onMyFriendsTap?()
             }.store(in: cancelBag)
         
+        // 답장
         input.pokedSectionKokButtonTap
             .compactMap { $0 }
-            .sink { userId in
-                print("찌르기 - \(userId)")
+            .flatMap { [weak self] userModel -> Driver<(PokeUserModel, PokeMessageModel)> in
+                guard let self, let value = self.onPokeButtonTapped?(userModel) else { return .empty() }
+                return value
+            }
+            .sink { [weak self] userModel, messageModel in
+                self?.useCase.poke(userId: userModel.userId, message: messageModel, willBeNewFriend: userModel.isFirstMeet)
             }.store(in: cancelBag)
         
+        // 먼저 찌르기
         input.friendSectionKokButtonTap
+            .merge(with: input.nearbyFriendsSectionKokButtonTap)
             .compactMap { $0 }
-            .sink { userId in
-                print("찌르기 - \(userId)")
+            .flatMap { [weak self] userModel -> Driver<(PokeUserModel, PokeMessageModel)> in
+                guard let self, let value = self.onPokeButtonTapped?(userModel) else { return .empty() }
+                return value
+            }
+            .sink { [weak self] userModel, messageModel in
+                self?.useCase.poke(userId: userModel.userId, message: messageModel, willBeNewFriend: false)
             }.store(in: cancelBag)
         
-        input.nearbyFriendsSectionKokButtonTap
+        input.profileImageTap
             .compactMap { $0 }
-            .sink { userId in
-                print("찌르기 - \(userId)")
+            .sink { [weak self] user in
+                self?.onProfileImageTapped?(user.playgroundId)
+            }.store(in: cancelBag)
+        
+        input.randomUserSectionFriendProfileImageTap
+            .compactMap { $0 }
+            .sink { [weak self] playgroundId in
+                self?.onProfileImageTapped?(playgroundId)
             }.store(in: cancelBag)
         
         return output
@@ -109,10 +149,6 @@ extension PokeMainViewModel {
     private func bindOutput(output: Output, cancelBag: CancelBag) {
         useCase.pokedToMeUser
             .compactMap { $0 }
-            .withUnretained(self)
-            .map { owner, pokeUserModel in
-                owner.makeNotificationListContentModel(with: pokeUserModel)
-            }
             .subscribe(output.pokedToMeUser)
             .store(in: cancelBag)
         
@@ -140,36 +176,40 @@ extension PokeMainViewModel {
             .map { _ in Void() }
             .subscribe(output.endRefreshLoading)
             .store(in: cancelBag)
-    }
-}
-
-// MARK: - Methods
-
-extension PokeMainViewModel {
-    private func makeNotificationListContentModel(with model: PokeUserModel) -> NotificationListContentModel {
-        return NotificationListContentModel(userId: model.userId,
-                                            avatarUrl: model.profileImage,
-                                            pokeRelation: PokeRelation(rawValue: model.relationName) ?? .newFriend,
-                                            name: model.name,
-                                            partInfomation: model.part,
-                                            description: model.message,
-                                            chipInfo: self.makeChipInfo(with: model),
-                                            isPoked: model.isAlreadyPoke,
-                                            isFirstMeet: model.isFirstMeet)
-    }
-    
-    private func makeChipInfo(with model: PokeUserModel) -> PokeChipView.ChipType {
-        if model.isFirstMeet { // 친구가 아닌 경우
-            switch model.mutual.count {
-            case 0:
-                return .newUser
-            case 1:
-                return .singleFriend(friendName: model.mutual.first ?? "")
-            default:
-                return .acquaintance(friendname: model.mutual.first ?? "", relationCount: "\(model.mutual.count-1)명")
-            }
-        }
         
-        return .withPokeCount(relation: model.relationName, pokeCount: String(model.pokeNum))
+        useCase.pokedResponse
+            .subscribe(output.pokeResponse)
+            .store(in: cancelBag)
+        
+        // 다른 뷰에서 찌르기를 했을 때 메인 뷰의 해당 유저의 찌르기 버튼을 비활성화 하기 위해 NotificationCenter로 찌르기 이벤트를 받아온다.
+        let notiName = NotiList.makeNotiName(list: .pokedResponse)
+        NotificationCenter.default.publisher(for: notiName)
+            .compactMap { $0.object as? PokeUserModel }
+            .subscribe(output.pokeResponse)
+            .store(in: cancelBag)
+        
+        useCase.pokedResponse
+            .sink { _ in
+                ToastUtils.showMDSToast(type: .success, text: I18N.Poke.pokeSuccess)
+            }.store(in: cancelBag)
+        
+        useCase.madeNewFriend
+            .sink { [weak self] userModel in
+                self?.onNewFriendMade?(userModel.name)
+            }.store(in: cancelBag)
+        
+        useCase.errorMessage
+            .compactMap { $0 }
+            .sink { message in
+                ToastUtils.showMDSToast(type: .alert, text: message)
+            }.store(in: cancelBag)
+        
+        useCase.isPokeNewUser
+            .sink { [weak self] isNewUser in
+                output.isLoading.send(false)
+                if isNewUser {
+                    self?.switchToOnboarding?()
+                }
+            }.store(in: cancelBag)
     }
 }

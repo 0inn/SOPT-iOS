@@ -11,6 +11,11 @@ import Foundation
 import Domain
 
 public protocol PokeFeatureBuildable {
-    func makePokeMain() -> PokeMainPresentable
+    func makePokeMain(isRouteFromRoot: Bool) -> PokeMainPresentable
     func makePokeMyFriends() -> PokeMyFriendsPresentable
+    func makePokeMyFriendsList(relation: PokeRelation) -> PokeMyFriendsListPresentable
+    func makePokeOnboarding() -> PokeOnboardingPresentable
+    func makePokeMessageTemplateBottomSheet(messageType: PokeMessageType) -> PokeMessageTemplatesPresentable
+    func makePokeNotificationList() -> PokeNotificationPresentable
+    func makePokeMakingFriendCompleted(friendName: String) -> PokeMakingFriendCompletedPresentable
 }

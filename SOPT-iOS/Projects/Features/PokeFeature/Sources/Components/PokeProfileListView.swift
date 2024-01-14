@@ -12,17 +12,16 @@ import DSKit
 import Core
 import Domain
 
-public final class PokeProfileListView: UIView {
+public final class PokeProfileListView: UIView, PokeCompatible {
     
     // MARK: - Properties
-    
-    typealias UserId = Int
-    
-    lazy var kokButtonTap: Driver<UserId?> = kokButton.tap.map { self.userId }.asDriver()
+        
+    lazy var kokButtonTap: Driver<PokeUserModel?> = kokButton.tap.map { self.user }.asDriver()
+    lazy var profileImageTap: Driver<PokeUserModel?> = profileImageView.tap.map { self.user }.asDriver()
     
     var viewType: ProfileListType
     
-    var userId: Int?
+    var user: PokeUserModel?
     
     // MARK: - UI Components
     
@@ -171,14 +170,19 @@ public final class PokeProfileListView: UIView {
     
     // MARK: - Methods
     
-    @discardableResult
-    func setData(with model: PokeUserModel) -> Self {
-        self.userId = model.userId
+    func setData(with model: PokeUserModel) {
+        self.user = model
         self.profileImageView.setImage(with: model.profileImage, relation: model.pokeRelation)
         self.nameLabel.text = model.name
-        self.partLabel.text = model.part
+        self.partLabel.text = "\(model.generation)기 \(model.part)"
         self.kokCountLabel.text = "\(model.pokeNum)콕"
-        return self
+        self.kokButton.isEnabled = !model.isAlreadyPoke
+    }
+    
+    func changeUIAfterPoke(newUserModel: PokeUserModel) {
+        guard let user, user.userId == newUserModel.userId else { return }
+        
+        self.setData(with: newUserModel)
     }
     
     @discardableResult
@@ -197,11 +201,11 @@ public final class PokeProfileListView: UIView {
     func setDividerViewIsHidden(to isHidden: Bool) -> Self {
         self.dividerView.isHidden = isHidden
         return self
-    }
+     }
     
     @discardableResult
-    func setIsFriend(to isFriend: Bool) -> Self {
-        self.kokButton.isFriend = isFriend
+    func setDividerViewColor(with color: UIColor) -> Self {
+        self.dividerView.backgroundColor = color
         return self
     }
 }
