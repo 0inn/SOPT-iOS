@@ -16,6 +16,7 @@ public enum MainCoordinatorDestination {
     case stamp
     case poke
     case signIn
+    case schedule
 }
 public protocol MainCoordinatorOutput {
     var requestCoordinating: ((MainCoordinatorDestination) -> Void)? { get set }
@@ -59,6 +60,9 @@ final class MainCoordinator: DefaultMainCoordinator {
         }
         main.vm.onAttendance = { [weak self] in
             self?.requestCoordinating?(.attendance)
+        }
+        main.vm.onSchedlue = { [weak self] in
+            self?.requestCoordinating?(.schedule)
         }
         router.replaceRootWindow(main.vc, withAnimation: true)
     }

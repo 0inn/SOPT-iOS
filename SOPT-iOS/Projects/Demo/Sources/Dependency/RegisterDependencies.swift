@@ -136,17 +136,27 @@ extension AppDelegate {
                 )
             }
         )
-        container.register(interface: PokeMainRepositoryInterface.self,
-           implement: {
+        container.register(
+            interface: PokeMainRepositoryInterface.self,
+            implement: {
                 PokeMainRepository(
                     service: DefaultPokeService()
                 )
             }
         )
-        container.register(interface: PokeMyFriendsRepositoryInterface.self,
-           implement: {
+        container.register(
+            interface: PokeMyFriendsRepositoryInterface.self,
+            implement: {
                 PokeMyFriendsRepository(
                     service: DefaultPokeService()
+                )
+            }
+        )
+        container.register(
+            interface: ScheduleRepositoryInterface.self,
+            implement: {
+                ScheduleRepository(
+                    scheduleService: DefaultScheduleService()
                 )
             }
         )

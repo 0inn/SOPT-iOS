@@ -58,6 +58,7 @@ public class MainViewModel: MainViewModelType {
     public var onSoptamp: (() -> Void)?
     public var onPoke: (() -> Void)?
     public var onNeedSignIn: (() -> Void)?
+    public var onSchedlue: (() -> Void)?
     
     // MARK: - init
   

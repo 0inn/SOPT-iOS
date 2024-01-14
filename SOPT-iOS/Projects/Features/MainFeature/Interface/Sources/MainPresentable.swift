@@ -20,6 +20,7 @@ public protocol MainCoordinatable {
     var onSafari: ((String) -> Void)? { get set }
     var onAttendance: (() -> Void)? { get set }
     var onNeedSignIn: (() -> Void)? { get set }
+    var onSchedlue: (() -> Void)? { get set }
 }
 public typealias MainViewModelType = ViewModelType & MainCoordinatable
 public typealias MainPresentable = (vc: MainViewControllable, vm: any MainViewModelType)

@@ -23,6 +23,7 @@ public enum APIType {
     case notification
     case description
     case poke
+    case schedule
 }
 
 public protocol BaseAPI: TargetType {
@@ -57,6 +58,8 @@ extension BaseAPI {
             base += "/description"
         case .poke:
             base += "/poke"
+        case .schedule:
+            base += "/schedule"
         }
         
         guard let url = URL(string: base) else {

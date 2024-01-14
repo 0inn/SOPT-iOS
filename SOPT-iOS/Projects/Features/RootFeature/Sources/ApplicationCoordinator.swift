@@ -18,6 +18,7 @@ import NotificationFeature
 import StampFeature
 import PokeFeature
 import AttendanceFeature
+import ScheduleFeature
 
 public
 final class ApplicationCoordinator: BaseCoordinator {
@@ -184,6 +185,8 @@ extension ApplicationCoordinator {
             case .signIn:
                 self?.runSignInFlow(by: .rootWindow(animated: true, message: nil))
                 self?.removeDependency(coordinator)
+            case .schedule:
+                self?.runScheduleFlow()
             }
         }
         addDependency(coordinator)
@@ -292,6 +295,26 @@ extension ApplicationCoordinator {
         coordinator.finishFlow = { [weak self, weak coordinator] in
             self?.removeDependency(coordinator)
         }
+        addDependency(coordinator)
+        coordinator.start()
+        
+        return coordinator
+    }
+    
+    @discardableResult
+    internal func runScheduleFlow() -> ScheduleCoordinator {
+        let coordinator = ScheduleCoordinator(
+            router: Router(
+                rootController: UIWindow.getRootNavigationController
+            ),
+            factory: ScheduleBuilder()
+        )
+        
+        coordinator.finishFlow = { [weak self, weak coordinator] in
+            coordinator?.childCoordinators = []
+            self?.removeDependency(coordinator)
+        }
+        
         addDependency(coordinator)
         coordinator.start()
         
