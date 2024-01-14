@@ -17,7 +17,7 @@ final class MainServiceCVC: UICollectionViewCell {
     
     private let serviceIcon: UIImageView = {
         let imageView = UIImageView()
-        imageView.tintColor = DSKitAsset.Colors.orange100.color
+        imageView.tintColor = DSKitAsset.Colors.secondary.color
         return imageView
     }()
     

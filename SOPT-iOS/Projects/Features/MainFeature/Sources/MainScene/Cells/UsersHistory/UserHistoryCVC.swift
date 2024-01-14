@@ -113,7 +113,7 @@ extension UserHistoryCVC {
         
         self.userTypeLabel.textColor = userType == .active ? DSKitAsset.Colors.black100.color : DSKitAsset.Colors.white100.color
         
-        self.userTypeLabel.backgroundColor = userType == .active ? DSKitAsset.Colors.orange100.color : DSKitAsset.Colors.black40.color
+        self.userTypeLabel.backgroundColor = userType == .active ? DSKitAsset.Colors.secondary.color : DSKitAsset.Colors.black40.color
     }
     
     private func resetHistoryView() {

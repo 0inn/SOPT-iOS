@@ -40,7 +40,6 @@ public final class AttendanceVC: UIViewController, AttendanceViewControllable {
     
     private var viewWillAppear = PassthroughSubject<Void, Never>()
     
-    
     // MARK: - UI Components
     
     /// 출석하기 모달 뷰
