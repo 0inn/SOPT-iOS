@@ -18,6 +18,7 @@ public extension Dep {
         public struct AppMyPage {}
         public struct Notification {}
         public struct Poke {}
+        public struct Schedule {}
     }
     
     struct Modules {}
@@ -113,6 +114,13 @@ public extension Dep.Features.Notification {
 
 public extension Dep.Features.Poke {
     static let group = "Poke"
+    
+    static let Feature = Dep.Features.project(name: "Feature", group: group)
+    static let Interface = Dep.project(target: "\(group)FeatureInterface", path: .relativeToFeature("\(group)Feature"))
+}
+
+public extension Dep.Features.Schedule {
+    static let group = "Schedule"
     
     static let Feature = Dep.Features.project(name: "Feature", group: group)
     static let Interface = Dep.project(target: "\(group)FeatureInterface", path: .relativeToFeature("\(group)Feature"))
