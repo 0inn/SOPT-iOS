@@ -22,6 +22,10 @@ import DSKit
 
 final class CalendarCVC: UICollectionViewCell, UICollectionViewRegisterable {
     
+    enum Color {
+        static let bg: UIColor = DSKitAsset.Colors.semanticBackground.color
+    }
+    
     // MARK: - Properties
     
     static var isFromNib: Bool = false
@@ -49,6 +53,10 @@ final class CalendarCVC: UICollectionViewCell, UICollectionViewRegisterable {
         $0.spacing = 2
     }
     
+    private let frontView = UIView().then {
+        $0.backgroundColor = Color.bg.withAlphaComponent(0.0)
+    }
+    
     // MARK: - Initialization
     
     override init(frame: CGRect) {
@@ -72,7 +80,7 @@ private extension CalendarCVC {
     }
     
     func setLayout() {
-        addSubviews(dateLabel, stackView)
+        addSubviews(dateLabel, stackView, frontView)
         
         dateLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(6)
@@ -83,6 +91,10 @@ private extension CalendarCVC {
             $0.top.equalTo(dateLabel.snp.bottom).offset(6)
             $0.leading.trailing.equalToSuperview().inset(4)
         }
+        
+        frontView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
     }
 }
 
@@ -90,9 +102,10 @@ private extension CalendarCVC {
 
 extension CalendarCVC {
     func setData(with dailySchedule: DailyScheduleModel) {
-        dateLabel.text = dailySchedule.date
+        dateLabel.text = dailySchedule.dayString
         dateLabel.textColor = dailySchedule.day.color
         dayType = dailySchedule.day
+        if !dailySchedule.isCurMonth { frontView.backgroundColor = Color.bg.withAlphaComponent(0.7) }
         
         dailySchedule.schedule.forEach { schedule in
             let scheduleView: CalendarScheduleView = .init(title: schedule.title, type: schedule.type)
